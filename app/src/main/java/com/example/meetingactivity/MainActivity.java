@@ -7,13 +7,11 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +19,11 @@ import com.example.meetingactivity.Fragment.BoardFragment;
 import com.example.meetingactivity.Fragment.CalendarFragment;
 import com.example.meetingactivity.Fragment.InforFragment;
 import com.example.meetingactivity.Fragment.PhotoFragment;
+import com.example.meetingactivity.adapter.BoardAdapter;
 import com.example.meetingactivity.adapter.ContentsPagerAdapter;
+import com.example.meetingactivity.model.Board;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
         implements View.OnClickListener,InforFragment.OnFragmentInteractionListener,
@@ -34,6 +36,11 @@ public class MainActivity extends AppCompatActivity
     private ContentsPagerAdapter mContentsPagerAdapter;
 
     Toolbar toolbar;
+    ListView listNotice,listNotice2;
+    ArrayList<Board> list;
+    BoardAdapter adapter;
+
+
 
 
 
@@ -50,9 +57,25 @@ public class MainActivity extends AppCompatActivity
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                switch (v.getId()){
+                    case R.drawable.icon_back:
+
+                }
                 Toast.makeText(getApplicationContext(),"돌아가기",Toast.LENGTH_SHORT).show();
             }
         });
+
+        listNotice=findViewById(R.id.listNotice);
+        listNotice2=findViewById(R.id.listNotice2);
+
+        list = new ArrayList<>();
+
+        adapter=new BoardAdapter(this,R.layout.list_notice,list);
+
+
+
+
+
 
         mContext = getApplicationContext();
         mTabLayout = (TabLayout) findViewById(R.id.layout_tab);

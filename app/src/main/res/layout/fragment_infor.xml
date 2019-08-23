@@ -56,22 +56,8 @@
 
     </LinearLayout>
 
-    <include
-        layout="@layout/list_notice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <include
-        layout="@layout/list_notice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <include
-        layout="@layout/list_notice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
     <ListView
+        android:id="@+id/listNotice2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1" />

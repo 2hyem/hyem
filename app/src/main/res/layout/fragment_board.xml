@@ -34,9 +34,10 @@
             </LinearLayout>
 
             <ListView
+                android:id="@+id/listNotice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:visibility="gone" />
+                tools:visibility="visible" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -54,9 +55,10 @@
             </LinearLayout>
 
             <ListView
+                android:id="@+id/listBoard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:visibility="gone" />
+                tools:visibility="visible" />
 
         </LinearLayout>
 
@@ -145,13 +147,13 @@
                 app:pressedTranslationZ="12dp" />
         </LinearLayout>
 
-        <include
-            layout="@layout/notice_input"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone" />
-
     </FrameLayout>
+
+    <include
+        layout="@layout/notice_input"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
 
 </android.support.design.widget.CoordinatorLayout>

@@ -1,24 +1,41 @@
 package com.example.meetingactivity.Fragment;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.text.Layout;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.meetingactivity.R;
+import com.example.meetingactivity.adapter.BoardAdapter;
+import com.example.meetingactivity.adapter.ShowAdapter;
+import com.example.meetingactivity.model.Board;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
+import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.HttpResponse;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -48,6 +65,20 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
     LinearLayout fabLayout,fabLayout1,fabLayout2,boardLayout;
     LinearLayout inputLayout;
     TextView textFab1,textFab2;
+    Button bntBack, bntWrite;
+    EditText editTitle,editContent;
+    ListView listNotice;
+    ArrayList<Board> list;
+    BoardAdapter adapter;
+    ShowAdapter adapter2;
+    //통신용 객체 선언
+    AsyncHttpClient client;
+    HttpResponse response;
+
+    String URL= "http://192.168.0.64:8080/0823/board/board_insert.jsp";
+
+    String URLlist= "http://192.168.0.64:8080/0823/board/board_list.jsp";
+
 
 
 
@@ -55,14 +86,7 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment BoardFragment.
-     */
+
     // TODO: Rename and change types and number of parameters
     public static BoardFragment newInstance(String param1, String param2) {
         BoardFragment fragment = new BoardFragment();
@@ -83,18 +107,17 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
         fab_open= AnimationUtils.loadAnimation(getActivity(),R.anim.fab_open);
         fab_close=AnimationUtils.loadAnimation(getActivity(),R.anim.fab_close);
 
-
-
-
-
-
+        client=new AsyncHttpClient();
+        response= new HttpResponse(getActivity());
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
        final View view =inflater.inflate(R.layout.fragment_board, container, false);
+        //플로팅 액션버튼
         fab=(FloatingActionButton) view.findViewById(R.id.fab);
         fab1=(FloatingActionButton)view.findViewById(R.id.fab1);
         fab2=(FloatingActionButton)view.findViewById(R.id.fab2);
@@ -110,13 +133,39 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
         inputLayout=view.findViewById(R.id.inputLayout);
 
 
+
+        //공지사항 입력 후 리스트에 추가
+        listNotice=view.findViewById(R.id.listNotice);
+        list = new ArrayList<>();
+        adapter=new BoardAdapter(getActivity(),R.layout.list_notice,list);
+        adapter2=new ShowAdapter(getActivity(),R.layout.list_item,list);
+
+        listNotice.setAdapter(adapter);
+       listNotice.setAdapter(adapter2);
+
+
+
+        bntBack=view.findViewById(R.id.bntBack);
+        bntWrite=view.findViewById(R.id.bntWrite);
+
+        editTitle=view.findViewById(R.id.editTitle);
+        editContent=view.findViewById(R.id.editContent);
+
+        bntBack.setOnClickListener(this);
+        bntWrite.setOnClickListener(this);
+
         fab.setOnClickListener(this);
         fab1.setOnClickListener(this);
         fab2.setOnClickListener(this);
 
-
-
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        adapter2.clear();
+        client.post(URLlist,response);
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -124,6 +173,7 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
         }
+
     }
 
     @Override
@@ -143,25 +193,82 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
         mListener = null;
     }
 
+
+    //이벤트설정
     @Override
     public void onClick(View v) {
+
+
+        Intent intent = new Intent();
+       intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+
         switch (v.getId()){
+            //플로팅 액션 버튼(+) 눌렀을때
             case R.id.fab:
                 anim();
                 break;
-            case R.id.fab1:
+            case R.id.fab1://일반게시글 입력화면으로
                 anim();
                 boardLayout.setVisibility(View.GONE);
                 fabLayout.setVisibility(View.GONE);
                 inputLayout.setVisibility(View.VISIBLE);
                 break;
-            case R.id.fab2:
+            case R.id.fab2: //공지사항 입력화면으로  //+모임장 또는 관리자 권한을 가진사람만 보여주게해야함
                 anim();
                 Toast.makeText(getActivity(),"button2",Toast.LENGTH_SHORT).show();
                 break;
+            case R.id.bntBack: //돌아가기 버튼
+                editTitle.setText("");
+                editContent.setText(""); //입력내용초기화
+                inputLayout.setVisibility(View.GONE);
+                boardLayout.setVisibility(View.VISIBLE);
+                fabLayout.setVisibility(View.VISIBLE);
+                break;
+            case  R.id.bntWrite:
+                String subject=editTitle.getText().toString().trim();
+                String content=editContent.getText().toString().trim();
+                String id="1";
+                String moimcode="1";
+                String filename="1";
+                String listnum="2";
+                String thumb="4";
+                String editdate="2";
+                String lev = "4";
+
+                Board item = new Board();
+                item.setSubject(subject);
+                item.setContent(content);
+                list.add(item);
+
+                //입력값이 있으면, 서버로 데이터 전송 및 요청
+                RequestParams params = new RequestParams();
+
+                params.put("id",id);
+                params.put("subject",subject);
+                params.put("content",content);
+                params.put("moimcode",moimcode);
+                params.put("filename",filename);
+                params.put("listnum",listnum);
+                params.put("thumb",thumb);
+                params.put("editdate",editdate);
+                params.put("lev",lev);
+              //  params.put();
+
+                client.post(URL,params,response);
+
+
+                editTitle.setText("");
+                editContent.setText("");
+                inputLayout.setVisibility(View.GONE);
+                boardLayout.setVisibility(View.VISIBLE);
+                fabLayout.setVisibility(View.VISIBLE);
+                break;
+
         }
     }
 
+
+    //플로팅액션버튼 동작 함수
     public void anim() {
                 if (isFabOpen) {
                         fab.animate().rotationBy(60);
@@ -189,5 +296,53 @@ public class BoardFragment extends Fragment implements View.OnClickListener {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+
+    class HttpResponse extends AsyncHttpResponseHandler {
+        Activity activity;
+        ProgressDialog dialog;
+
+        public HttpResponse(Activity activity) {
+            this.activity = activity;
+        }
+
+        //통신 시작
+        @Override
+        public void onStart() {
+            dialog = new ProgressDialog(activity);
+            dialog.setMessage("잠시만 기다려 주세요...");
+            dialog.setCancelable(false);
+            dialog.show();
+        }
+        // 통신 종료
+        @Override
+        public void onFinish() {
+            dialog.dismiss();
+            dialog = null;
+        }
+        //통신 성공
+        @Override
+        public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+            String strJson = new String(responseBody);
+            try {
+                JSONObject json = new JSONObject(strJson);
+                String rt  = json.getString("rt");
+                if(rt.equals("OK")){
+                    Toast.makeText(activity,"저장성공",Toast.LENGTH_SHORT).show();
+
+                                    }else {
+                    Toast.makeText(activity,"실패",Toast.LENGTH_SHORT).show();
+
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        //통신 실패
+        @Override
+        public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+            Toast.makeText(activity, "통신실패"+statusCode, Toast.LENGTH_SHORT).show();
+        }
     }
 }
